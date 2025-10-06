@@ -1,19 +1,20 @@
-import { useState } from 'react';
+import { useState, MouseEvent } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { MapPin, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { markersActions } from '@features/markers';
+import { RootState } from '@app/store';
 
 export function Sidebar() {
 	const [isCollapsed, setIsCollapsed] = useState(false);
-	const markers = useSelector((state) => state.markers.markers);
-	const selectedMarkerId = useSelector((state) => state.markers.selectedMarkerId);
+	const markers = useSelector((state: RootState) => state.markers.markers);
+	const selectedMarkerId = useSelector((state: RootState) => state.markers.selectedMarkerId);
 	const dispatch = useDispatch();
 
-	const handleMarkerClick = (markerId) => {
+	const handleMarkerClick = (markerId: string) => {
 		dispatch(markersActions.setSelectedMarker(markerId));
 	};
 
-	const handleRemoveMarker = (e, markerId) => {
+	const handleRemoveMarker = (e: MouseEvent, markerId: string) => {
 		e.stopPropagation();
 		dispatch(markersActions.removeMarker(markerId));
 	};

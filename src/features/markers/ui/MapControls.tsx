@@ -1,6 +1,11 @@
 import { Plus, X } from 'lucide-react';
 
-export function MapControls({ isAddingMarker, onToggleAddMarker }) {
+interface IMapControls {
+	isAddingMarker: boolean;
+	onToggleAddMarker: () => void;
+}
+
+export function MapControls({ isAddingMarker, onToggleAddMarker }: IMapControls) {
 	return (
 		<div className='absolute top-4 right-4 flex flex-col gap-2'>
 			<button
