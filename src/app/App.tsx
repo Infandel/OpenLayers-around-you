@@ -6,6 +6,7 @@ function App() {
 		<div className='h-screen w-screen overflow-hidden'>
 			<Routes>
 				<Route path='/' element={<MapPage />} />
+				<Route path='*' element={<MapPage />} />
 			</Routes>
 		</div>
 	);

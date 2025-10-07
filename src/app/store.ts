@@ -1,6 +1,5 @@
-import { markersReducer } from '@/features/markers';
 import { configureStore } from '@reduxjs/toolkit';
-import { markersApi } from '@entities/marker/api/markersApi';
+import { markersReducer, markersApi } from '@entities/marker';
 
 export const store = configureStore({
 	reducer: {

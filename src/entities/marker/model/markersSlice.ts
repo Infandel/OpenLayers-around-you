@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Marker } from '@entities/marker';
+import type { Marker } from './types';
 
 interface MarkersState {
 	markers: Marker[];

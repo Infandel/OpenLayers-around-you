@@ -1,19 +1,16 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import Map from 'ol/Map';
-import View from 'ol/View';
-import TileLayer from 'ol/layer/Tile';
-import OSM from 'ol/source/OSM';
-import { fromLonLat, toLonLat } from 'ol/proj';
-import { Feature, MapBrowserEvent } from 'ol';
-import { Point } from 'ol/geom';
-import VectorLayer from 'ol/layer/Vector';
-import VectorSource from 'ol/source/Vector';
-import { Style, Icon } from 'ol/style';
-import Overlay from 'ol/Overlay';
-import { MapControls, markersActions } from '@/features/markers';
-import { Marker, useGetMarkersQuery } from '@entities/marker';
+import type Map from 'ol/Map';
+import type VectorSource from 'ol/source/Vector';
+import type Overlay from 'ol/Overlay';
+import { MapControls } from '@features/mapControls';
+import { useGetMarkersQuery, markersActions } from '@entities/marker';
 import { RootState } from '@app/store';
+import { closePopupHandler } from '../helpers/closePopupHandler';
+import { useAddMarker } from '../hooks/useAddMarker';
+import { useInitializeMap } from '../hooks/useInitializeMap';
+import { useUpdateMarkers } from '../hooks/useUpdateMarkers';
+import { useZoomToSelectedMarker } from '../hooks/useZoomToSelectedMarker';
 
 export function MapWidget() {
 	const mapRef = useRef<HTMLDivElement>(null);
@@ -24,56 +21,16 @@ export function MapWidget() {
 	const [isAddingMarker, setIsAddingMarker] = useState(false);
 	const isAddingMarkerRef = useRef(false);
 
+	const addMarker = useAddMarker({ isAddingMarkerRef, setIsAddingMarker });
+
 	const dispatch = useDispatch();
 	const markers = useSelector((state: RootState) => state.markers.markers);
-	const selectedMarkerId = useSelector((state: RootState) => state.markers.selectedMarkerId);
 
 	const { data: apiMarkers, isLoading } = useGetMarkersQuery();
 
 	useEffect(() => {
 		isAddingMarkerRef.current = isAddingMarker;
 	}, [isAddingMarker]);
-
-	console.log(markers.length);
-
-	const mapClickHandler = useCallback(
-		() => (evt: MapBrowserEvent<any>, map: Map, popupOverlay: Overlay) => {
-			if (isAddingMarkerRef.current) {
-				const coordinates = toLonLat(evt.coordinate) as [number, number];
-				const newMarker: Marker = {
-					id: Date.now().toString(),
-					name: `Marker ${markers.length + 1}`,
-					description: 'Click to edit description',
-					coordinates,
-				};
-
-				dispatch(markersActions.addMarker(newMarker));
-				setIsAddingMarker(false);
-				return;
-			}
-
-			const feature = map.forEachFeatureAtPixel(evt.pixel, (feature) => feature);
-
-			if (feature) {
-				const markerId = feature.get('markerId');
-				const marker = markers.find((m) => m.id === markerId);
-
-				if (marker) {
-					dispatch(markersActions.setSelectedMarker(markerId));
-					const coordinate = fromLonLat(marker.coordinates);
-
-					popupRef.current!.querySelector('.popup-name')!.textContent = marker.name;
-					popupRef.current!.querySelector('.popup-description')!.textContent = marker.description;
-
-					popupOverlay.setPosition(coordinate);
-				}
-			} else {
-				popupOverlay.setPosition(undefined);
-				dispatch(markersActions.clearSelectedMarker());
-			}
-		},
-		[isAddingMarker]
-	);
 
 	// Load markers from API on mount
 	useEffect(() => {
@@ -82,103 +39,18 @@ export function MapWidget() {
 		}
 	}, [apiMarkers, dispatch]);
 
-	// Initialize map
+	useInitializeMap({ mapRef, mapInstanceRef, vectorSourceRef, popupRef, popupOverlayRef, isAddingMarkerRef });
+
+	useUpdateMarkers({ vectorSourceRef, mapInstanceRef, popupRef, popupOverlayRef });
+
+	// Add new marker
 	useEffect(() => {
-		if (!mapRef.current || !popupRef.current) return;
-
-		const vectorSource = new VectorSource();
-		vectorSourceRef.current = vectorSource;
-
-		const vectorLayer = new VectorLayer({
-			source: vectorSource,
-			style: new Style({
-				image: new Icon({
-					anchor: [0.5, 1],
-					src: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="%232563eb"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>',
-					scale: 1.2,
-				}),
-			}),
-		});
-
-		const map = new Map({
-			target: mapRef.current,
-			layers: [
-				new TileLayer({
-					source: new OSM(),
-				}),
-				vectorLayer,
-			],
-			view: new View({
-				center: fromLonLat([-73.9654, 40.7829]),
-				zoom: 12,
-			}),
-		});
-
-		// Setup popup overlay
-		const popupOverlay = new Overlay({
-			element: popupRef.current,
-			autoPan: {
-				animation: {
-					duration: 250,
-				},
-			},
-			positioning: 'center-center',
-		});
-
-		map.addOverlay(popupOverlay);
-		popupOverlayRef.current = popupOverlay;
-
-		// Handle marker clicks
-		map.on('click', (evt) => mapClickHandler()(evt, map, popupOverlay));
-
-		// Change cursor on hover
-		map.on('pointermove', (evt) => {
-			const hit = map.hasFeatureAtPixel(evt.pixel);
-			map.getTargetElement().style.cursor = hit ? 'pointer' : isAddingMarkerRef.current ? 'crosshair' : '';
-		});
-
-		mapInstanceRef.current = map;
-
-		return () => {
-			map.setTarget(undefined);
-		};
-	}, []);
-
-	// Update markers on map
-	useEffect(() => {
-		if (!vectorSourceRef.current) return;
-
-		vectorSourceRef.current.clear();
-
-		markers.forEach((marker) => {
-			const feature = new Feature({
-				geometry: new Point(fromLonLat(marker.coordinates)),
-			});
-			feature.set('markerId', marker.id);
-			vectorSourceRef.current!.addFeature(feature);
-		});
-	}, [markers]);
-
-	// Zoom to selected marker
-	useEffect(() => {
-		if (selectedMarkerId && mapInstanceRef.current) {
-			const marker = markers.find((m) => m.id === selectedMarkerId);
-			if (marker) {
-				mapInstanceRef.current.getView().animate({
-					center: fromLonLat(marker.coordinates),
-					zoom: 15,
-					duration: 500,
-				});
-			}
+		if (mapInstanceRef.current) {
+			mapInstanceRef.current.on('click', addMarker);
 		}
-	}, [selectedMarkerId, markers]);
+	}, [mapInstanceRef.current, markers]);
 
-	const handleClosePopup = () => {
-		if (popupOverlayRef.current) {
-			popupOverlayRef.current.setPosition(undefined);
-		}
-		dispatch(markersActions.clearSelectedMarker());
-	};
+	useZoomToSelectedMarker({ mapInstanceRef });
 
 	return (
 		<div className='relative flex-1 h-full'>
@@ -193,7 +65,7 @@ export function MapWidget() {
 			)}
 
 			<div ref={popupRef} className='ol-popup'>
-				<button onClick={handleClosePopup} className='ol-popup-closer'>
+				<button onClick={() => closePopupHandler({ popupOverlayRef, dispatch })} className='ol-popup-closer'>
 					×
 				</button>
 				<div>

@@ -1,7 +1,7 @@
-import { useState, MouseEvent } from 'react';
+import { useState, type MouseEvent } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { MapPin, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { markersActions } from '@features/markers';
+import { markersActions } from '@entities/marker';
 import { RootState } from '@app/store';
 
 export function Sidebar() {
