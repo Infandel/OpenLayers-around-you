@@ -1,8 +1,13 @@
-import { useState, type MouseEvent } from 'react';
+import { useState, type ChangeEvent } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { MapPin, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { markersActions } from '@entities/marker';
-import { RootState } from '@app/store';
+import { RootState } from '@app/store/store';
+import { CollapseButton } from './CollapseButton';
+import type { EditingMarkerState } from '../config/types';
+import { EDITING_MARKER_INITIAL_STATE } from '../config/constants';
+import { InteractiveButtons } from './InteractiveButtons';
+import { EditMarker } from './EditMarker';
 
 export function Sidebar() {
 	const [isCollapsed, setIsCollapsed] = useState(false);
@@ -10,13 +15,13 @@ export function Sidebar() {
 	const selectedMarkerId = useSelector((state: RootState) => state.markers.selectedMarkerId);
 	const dispatch = useDispatch();
 
-	const handleMarkerClick = (markerId: string) => {
-		dispatch(markersActions.setSelectedMarker(markerId));
-	};
+	const [editingMarker, setEditingMarker] = useState<EditingMarkerState>(EDITING_MARKER_INITIAL_STATE);
 
-	const handleRemoveMarker = (e: MouseEvent, markerId: string) => {
-		e.stopPropagation();
-		dispatch(markersActions.removeMarker(markerId));
+	const handleMarkerClick = (markerId: string) => {
+		// Prevent selecting marker while editing it
+		if (editingMarker.id !== markerId) {
+			dispatch(markersActions.setSelectedMarker(markerId));
+		}
 	};
 
 	return (
@@ -53,23 +58,13 @@ export function Sidebar() {
 									}`}
 								>
 									<div className='flex items-start justify-between gap-3'>
-										<div className='flex-1 min-w-0'>
-											<div className='flex items-center gap-2 mb-1'>
-												<MapPin className='w-4 h-4 text-primary flex-shrink-0' />
-												<h3 className='font-semibold text-gray-900 truncate'>{marker.name}</h3>
-											</div>
-											<p className='text-sm text-gray-600 line-clamp-2'>{marker.description}</p>
-											<p className='text-xs text-gray-400 mt-2'>
-												{marker.coordinates[1].toFixed(4)}, {marker.coordinates[0].toFixed(4)}
-											</p>
-										</div>
-										<button
-											onClick={(e) => handleRemoveMarker(e, marker.id)}
-											className='p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0'
-											aria-label='Remove marker'
-										>
-											<Trash2 className='w-4 h-4' />
-										</button>
+										<EditMarker editingMarker={editingMarker} setEditingMarker={setEditingMarker} marker={marker} />
+
+										<InteractiveButtons
+											editingMarker={editingMarker}
+											setEditingMarker={setEditingMarker}
+											marker={marker}
+										/>
 									</div>
 								</div>
 							))}
@@ -78,18 +73,7 @@ export function Sidebar() {
 				</div>
 			</div>
 
-			<button
-				onClick={() => setIsCollapsed(!isCollapsed)}
-				className='absolute left-0 top-1/2 -translate-y-1/2 bg-white border border-gray-200 rounded-r-lg p-2 shadow-lg hover:bg-gray-50 transition-colors z-10'
-				style={{ left: isCollapsed ? '0' : '320px' }}
-				aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-			>
-				{isCollapsed ? (
-					<ChevronRight className='w-5 h-5 text-gray-600' />
-				) : (
-					<ChevronLeft className='w-5 h-5 text-gray-600' />
-				)}
-			</button>
+			<CollapseButton isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
 		</>
 	);
 }

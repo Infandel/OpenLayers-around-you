@@ -18,6 +18,15 @@ export const { actions: markersActions, reducer: markersReducer } = createSlice(
 		addMarker: (state, action: PayloadAction<Marker>) => {
 			state.markers.push(action.payload);
 		},
+		updateMarker: (state, action: PayloadAction<{ id: string; name: string; description: string }>) => {
+			const { id, name, description } = action.payload;
+			const marker = state.markers.find((m) => m.id === id);
+
+			if (marker) {
+				marker.name = name;
+				marker.description = description;
+			}
+		},
 		removeMarker: (state, action: PayloadAction<string>) => {
 			state.markers = state.markers.filter((m) => m.id !== action.payload);
 		},

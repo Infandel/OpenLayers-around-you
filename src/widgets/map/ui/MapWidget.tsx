@@ -5,7 +5,7 @@ import type VectorSource from 'ol/source/Vector';
 import type Overlay from 'ol/Overlay';
 import { MapControls } from '@features/mapControls';
 import { useGetMarkersQuery, markersActions } from '@entities/marker';
-import { RootState } from '@app/store';
+import { RootState } from '@app/store/store';
 import { closePopupHandler } from '../helpers/closePopupHandler';
 import { useAddMarker } from '../hooks/useAddMarker';
 import { useInitializeMap } from '../hooks/useInitializeMap';

@@ -1,4 +1,4 @@
-import { type RootState } from '@app/store';
+import { type RootState } from '@app/store/store';
 import { fromLonLat } from 'ol/proj';
 import { type MutableRefObject, useEffect } from 'react';
 import { useSelector } from 'react-redux';

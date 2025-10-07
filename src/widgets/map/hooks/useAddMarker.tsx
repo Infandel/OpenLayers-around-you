@@ -18,7 +18,7 @@ export const useAddMarker = ({ isAddingMarkerRef, setIsAddingMarker }: IUseAddMa
 			const newMarker: Marker = {
 				id: Date.now().toString(),
 				name: `New Marker`,
-				description: 'Click to edit description',
+				description: 'New marker description',
 				coordinates,
 			};
 

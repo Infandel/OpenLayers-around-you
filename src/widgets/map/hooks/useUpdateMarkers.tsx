@@ -1,4 +1,4 @@
-import { RootState } from '@app/store';
+import { RootState } from '@app/store/store';
 import Feature from 'ol/Feature';
 import { type Geometry, Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
