@@ -59,5 +59,5 @@ This project follows **Feature-Sliced Design (FSD)** principles:
 - **pages/** - Full-page components and routing
 - **widgets/** - Large, self-contained UI blocks
 - **features/** - User interactions and business logic
-- **entities/** - Business entities
-- **shared/** - Reusable utilities and API clients
+- **entities/** - Business entities and API clients
+- **shared/** - Reusable utilities
