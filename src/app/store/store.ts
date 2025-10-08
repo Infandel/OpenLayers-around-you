@@ -1,12 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { markersReducer, markersApi } from '@entities/marker';
+import { api } from '@shared/api';
+import { rootReducer } from './rootReducer';
 
 export const store = configureStore({
-	reducer: {
-		markers: markersReducer,
-		[markersApi.reducerPath]: markersApi.reducer,
-	},
-	middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(markersApi.middleware),
+	/** Sending reducers */
+	reducer: rootReducer,
+	/** Middlewares configuration */
+	middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(api.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

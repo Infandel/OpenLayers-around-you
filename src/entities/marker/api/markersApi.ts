@@ -1,5 +1,5 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { Marker } from '../model/types';
+import { api } from '@shared/api';
 
 // Mock API data
 const mockMarkers: Marker[] = [
@@ -23,11 +23,9 @@ const mockMarkers: Marker[] = [
 	},
 ];
 
-export const markersApi = createApi({
-	reducerPath: 'markersApi',
-	baseQuery: fetchBaseQuery({ baseUrl: '/api' }),
-	endpoints: (builder) => ({
-		getMarkers: builder.query<Marker[], void>({
+export const markersApi = api.injectEndpoints({
+	endpoints: ({ query }) => ({
+		getMarkers: query<Marker[], void>({
 			queryFn: async () => {
 				// Simulate API delay
 				await new Promise((resolve) => setTimeout(resolve, 500));
